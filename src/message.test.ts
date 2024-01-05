@@ -1,11 +1,15 @@
-import { AccountUpdate, Mina, PrivateKey, PublicKey, Reducer } from 'o1js';
+import { AccountUpdate, Field, Mina, PrivateKey, PublicKey, Reducer } from 'o1js';
 import { Message } from './message';
 
-describe('message.js', () => {
+describe('Spy Messaging Network', () => {
   let zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey,
     zkAppInstance: Message,
     Local: any
+
+    const Bob = PrivateKey.fromBase58(
+      'EKFAdBGSSXrBbaCVqy4YjwWHoGEnsqYRQTqz227Eb5bzMx2bWu3F'
+    )
 
   beforeAll(async () => {
     const useProof = false
@@ -33,11 +37,7 @@ describe('message.js', () => {
   });
 
 
-  test("admin can add users ", async () => {
-    const Bob = PrivateKey.fromBase58(
-      'EKFAdBGSSXrBbaCVqy4YjwWHoGEnsqYRQTqz227Eb5bzMx2bWu3F'
-    )
-
+  test("Only Admin can add users ", async () => {
     const { privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1];
 
     // check for adding members
@@ -65,19 +65,19 @@ describe('message.js', () => {
     return expect(txn1.sign([senderKey]).send()).rejects.toThrow()
   })
 
-  test("Method addUser should emit actions ", async () => {
-    const Bob = PrivateKey.fromBase58(
-      'EKFAdBGSSXrBbaCVqy4YjwWHoGEnsqYRQTqz227Eb5bzMx2bWu3F'
-    )
+  test("Method addUser should emit actions", async () => {
+  
     let pastActions = await zkAppInstance.reducer.fetchActions({
       fromActionState: Reducer.initialActionState
     })
 
     expect(pastActions[0][0].toBase58()).toBe(Bob.toPublicKey().toBase58())
 
-
   })
 
+  test("Total users should be 1", async () => {
+    expect(zkAppInstance.totalUsers.get()).toEqual(Field.from(1))
+  })
 
 
 });

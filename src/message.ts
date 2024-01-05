@@ -5,12 +5,16 @@ import {
     PublicKey,
     Bool,
     Reducer,
-    Provable
+    Provable,
+    state,
+    State,
+    Field,
 } from 'o1js';
 
 
 export class Message extends SmartContract {
-
+    
+    @state(Field) totalUsers = State<Field>();
     //Map for storing user enrollment
     reducer = Reducer({
         actionType: PublicKey,
@@ -26,6 +30,9 @@ export class Message extends SmartContract {
     }
 
     @method addUsers(user: PublicKey) {
+        const x = this.totalUsers.get()
+        this.totalUsers.requireEquals(x)
+        x.assertLessThanOrEqual(100)
         // past actions 
         let pendingActions = this.reducer.getActions({ fromActionState: Reducer.initialActionState })
 
@@ -47,6 +54,9 @@ export class Message extends SmartContract {
         );
             
         let toEmit = Provable.if(exists, PublicKey.empty(), user);
+        let addedValue = Provable.if(exists, x , x.add(1)); 
+
+        this.totalUsers.set(addedValue);
 
         this.reducer.dispatch(toEmit);
 
