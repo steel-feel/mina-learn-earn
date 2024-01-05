@@ -19,7 +19,7 @@ const { privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1
 const zkAppPrivateKey = PrivateKey.random();
 const zkAppAddress = zkAppPrivateKey.toPublicKey();
 
-// create an instance of Square - and deploy it to zkAppAddress
+// create an instance of Message - and deploy it to zkAppAddress
 const zkAppInstance = new Message(zkAppAddress);
 const deployTxn = await Mina.transaction(deployerAccount, () => {
   AccountUpdate.fundNewAccount(deployerAccount);
@@ -42,14 +42,14 @@ const txn1 = await Mina.transaction(senderAccount, () => {
 });
 
 await txn1.prove();
-await txn1.sign([ senderKey, zkAppPrivateKey]).send();
+const tx1Promise = await txn1.sign([ senderKey, zkAppPrivateKey]).send();
 
+await tx1Promise.wait();
 
 // Fetch all events from zkapp starting at block 0
 // const events = await zkAppInstance.fetchEvents(UInt32.from(0));
 
-let pastActions = await zkAppInstance.reducer.fetchActions({
-  fromActionState: Reducer.initialActionState
-})
+// let pastActions = await zkAppInstance.reducer.fetchActions({
+//   fromActionState: Reducer.initialActionState
+// })
 
-console.log(JSON.stringify(pastActions));
