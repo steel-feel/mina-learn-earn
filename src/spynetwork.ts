@@ -142,25 +142,23 @@ export class SpyNetwork extends SmartContract {
         //check correct message format
         const mMessageBits = message.toBits()
         const condition1 = Provable.if(mMessageBits[249],
-             mMessageBits[250].not()
-            .and(mMessageBits[251].not())
-            .and(mMessageBits[252].not())
-            .and(mMessageBits[253].not())
-            .and(mMessageBits[254].not())
-            ,new Bool(true))
+            mMessageBits[250].not()
+                .and(mMessageBits[251].not())
+                .and(mMessageBits[252].not())
+                .and(mMessageBits[253].not())
+                .and(mMessageBits[254].not()),
+            new Bool(true))
 
-        const condition2 =   Provable.if(mMessageBits[250],
-            mMessageBits[251]
-           ,new Bool(true))   
+        const condition2 = Provable.if(mMessageBits[250], mMessageBits[251], new Bool(true))
 
-        const condition3 =   Provable.if(mMessageBits[252],
-             mMessageBits[253].not()
-            .and(mMessageBits[254].not())
-            ,new Bool(true)   )  
+        const condition3 = Provable.if(mMessageBits[252],
+            mMessageBits[253].not()
+                .and(mMessageBits[254].not()),
+            new Bool(true))
 
-        const finCondition = condition1.and(condition2).and(condition3) 
+        const finCondition = condition1.and(condition2).and(condition3)
 
-        const messageGate =  finCondition.and(isUserEligible)  
+        const messageGate = finCondition.and(isUserEligible)
 
         messageGate.assertTrue()
 
@@ -169,13 +167,13 @@ export class SpyNetwork extends SmartContract {
 
         /// Emit Action
         let toEmit = new Spy({
-            publicKey: this.sender ,
+            publicKey: this.sender,
             message: message,
         })
         this.reducer.dispatch(toEmit);
 
         /// Emit recevied message
-        this.emitEvent("received-message-from", this.sender );
+        this.emitEvent("received-message-from", this.sender);
 
     }
 }

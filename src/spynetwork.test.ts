@@ -40,7 +40,7 @@ describe('Spy Messaging Network', () => {
 
     // check for adding members
     const txn1 = await Mina.transaction(senderAccount, () => {
-     const zkAppInstance = new SpyNetwork(zkAppAddress);
+      const zkAppInstance = new SpyNetwork(zkAppAddress);
       zkAppInstance.addUsers(bobAccount);
       zkAppInstance.requireSignature()
     });
@@ -63,7 +63,7 @@ describe('Spy Messaging Network', () => {
 
     // return expect(txn1.sign([senderKey]).send()).rejects.toThrow()
 
-   return expect(Mina.transaction(senderAccount, () => {
+    return expect(Mina.transaction(senderAccount, () => {
       const zkAppInstance = new SpyNetwork(zkAppAddress);
       zkAppInstance.addUsers(bobAccount);
       zkAppInstance.requireSignature()
@@ -104,7 +104,7 @@ describe('Spy Messaging Network', () => {
 
     const zkAppInstance = new SpyNetwork(zkAppAddress);
 
-    return expect( Mina.transaction(bobAccount, () => {
+    return expect(Mina.transaction(bobAccount, () => {
       const rawMessage = Field.random()
       const mBits = rawMessage.toBits()
       mBits[254] = new Bool(false)
@@ -119,6 +119,17 @@ describe('Spy Messaging Network', () => {
       zkAppInstance.sendMessage(message)
     })).rejects.toThrow()
 
+  })
+
+  test("Should emit event for sent message", async () => {
+    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
+    const zkAppInstance = new SpyNetwork(zkAppAddress);
+
+    //check for event of user
+    const events = await zkAppInstance.fetchEvents(UInt32.from(0))
+
+    expect(events[0].event.data).toEqual(bobAccount)
+    expect(events[0].type).toMatch(/received-message-from/)
   })
 
 
