@@ -1,10 +1,10 @@
 import { AccountUpdate, Field, Mina, PrivateKey, PublicKey, Reducer } from 'o1js';
-import { Message } from './message';
+import { SpyNetwork } from './spynetwork';
 
 describe('Spy Messaging Network', () => {
   let zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey,
-    zkAppInstance: Message,
+    zkAppInstance: SpyNetwork,
     Local: any
 
   beforeAll(async () => {
@@ -20,7 +20,7 @@ describe('Spy Messaging Network', () => {
     zkAppAddress = zkAppPrivateKey.toPublicKey();
 
     // create an instance of Message - and deploy it to zkAppAddress
-    zkAppInstance = new Message(zkAppAddress);
+    zkAppInstance = new SpyNetwork(zkAppAddress);
     const deployTxn = await Mina.transaction(deployerAccount, () => {
       AccountUpdate.fundNewAccount(deployerAccount);
       zkAppInstance.deploy();
@@ -78,5 +78,7 @@ describe('Spy Messaging Network', () => {
 
     return expect(tx1.sign([bobPrivateKey]).send()).resolves.toBeTruthy()
   })
+
+  
 
 });

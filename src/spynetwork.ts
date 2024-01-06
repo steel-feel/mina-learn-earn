@@ -29,7 +29,7 @@ class Spy extends Struct({
 
 }
 
-export class Message extends SmartContract {
+export class SpyNetwork extends SmartContract {
 
     /// Keep track of total Spies in network
     @state(Field) totalUsers = State<Field>();
