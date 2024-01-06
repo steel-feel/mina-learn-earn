@@ -30,6 +30,8 @@ export class Message extends SmartContract {
     }
 
     @method addUsers(user: PublicKey) {
+        /// To force admin only access We could also use `this.requireSignature()` 
+        /// currently its done by `editActionState: Permissions.signature()`
         const x = this.totalUsers.get()
         this.totalUsers.requireEquals(x)
         x.assertLessThanOrEqual(100)
