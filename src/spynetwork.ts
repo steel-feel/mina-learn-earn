@@ -123,19 +123,54 @@ export class SpyNetwork extends SmartContract {
             initial
         );
 
+        /**
+         * 
+         * 
+        Flag 6  mMessageBits[254] = Bool(false)
+        Flag 5  mMessageBits[253] = Bool(false)       
+        Flag 4  mMessageBits[252] = Bool(true)
+        Flag 3 mMessageBits[251] = Bool(true)
+        Flag 2  mMessageBits[250] = Bool(true)
+        Flag 1 mMessageBits[249] = Bool(false)
+         * 
+         */
+
+        //check correct message format
+        const mMessageBits = message.toBits()
+        const condition1 = Provable.if(mMessageBits[249],
+             mMessageBits[250].not()
+            .and(mMessageBits[251].not())
+            .and(mMessageBits[252].not())
+            .and(mMessageBits[253].not())
+            .and(mMessageBits[254].not())
+            ,new Bool(true))
+
+        const condition2 =   Provable.if(mMessageBits[250],
+            mMessageBits[251]
+           ,new Bool(true))   
+
+        const condition3 =   Provable.if(mMessageBits[250],
+             mMessageBits[253].not()
+            .and(mMessageBits[254].not())
+            ,new Bool(true)   )  
+
+        const finCondition = condition1.and(condition2).and(condition3) 
+
+        const messageGate =   finCondition.and(isUserEligible)  
+
         /// Update message counter
-        let updatedTotalMessages = Provable.if(isUserEligible, x, x.add(1));
+        let updatedTotalMessages = Provable.if(messageGate, x, x.add(1));
         this.totalMessages.set(updatedTotalMessages);
 
         /// Emit Action
         let toEmit = new Spy({
-            publicKey: Provable.if(isUserEligible, this.sender, PublicKey.empty()),
-            message: Provable.if(isUserEligible, message, Field.empty()),
+            publicKey: Provable.if(messageGate, this.sender, PublicKey.empty()),
+            message: Provable.if(messageGate, message, Field.empty()),
         })
         this.reducer.dispatch(toEmit);
 
         /// Emit recevied message
-        this.emitEvent("received-message-from", Provable.if(isUserEligible, this.sender, PublicKey.empty()));
+        this.emitEvent("received-message-from", Provable.if(messageGate, this.sender, PublicKey.empty()));
 
     }
 }

@@ -1,4 +1,4 @@
-import { AccountUpdate, Field, Mina, PrivateKey, PublicKey, Reducer } from 'o1js';
+import { AccountUpdate, Bool, Field, Mina, PrivateKey, PublicKey, Reducer } from 'o1js';
 import { SpyNetwork } from './spynetwork';
 
 describe('Spy Messaging Network', () => {
@@ -70,7 +70,17 @@ describe('Spy Messaging Network', () => {
     const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
 
     const tx1 = await Mina.transaction(bobAccount, () => {
-      const message = Field.random()
+      const rawMessage = Field.random()
+      const mBits = rawMessage.toBits()
+      mBits[254] = new Bool(false)
+      mBits[253] = new Bool(false)
+      mBits[252] = new Bool(false)
+      mBits[251] = new Bool(false)
+      mBits[250] = new Bool(false)
+      mBits[249] = new Bool(true)
+
+      const message = Field.fromBits(mBits)
+
       zkAppInstance.sendMessage(message)
     })
 
@@ -79,6 +89,6 @@ describe('Spy Messaging Network', () => {
     return expect(tx1.sign([bobPrivateKey]).send()).resolves.toBeTruthy()
   })
 
-  
+
 
 });
