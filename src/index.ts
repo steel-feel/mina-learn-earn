@@ -1,3 +1,3 @@
-import { Message } from './spynetwork.js';
+import { SpyNetwork } from './spynetwork.js';
 
-export { Message };
+export { SpyNetwork };
