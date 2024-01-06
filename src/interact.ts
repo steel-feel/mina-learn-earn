@@ -36,20 +36,14 @@ const Bob = PrivateKey.fromBase58(
 )
 // check for adding members
 const txn1 = await Mina.transaction(senderAccount, () => {
-  zkAppInstance.addUsers( Bob.toPublicKey() );
+  zkAppInstance.addUsers(Bob.toPublicKey());
   zkAppInstance.requireSignature()
 
 });
 
 await txn1.prove();
-const tx1Promise = await txn1.sign([ senderKey, zkAppPrivateKey]).send();
+const tx1Promise = await txn1.sign([senderKey, zkAppPrivateKey]).send();
 
 await tx1Promise.wait();
 
-// Fetch all events from zkapp starting at block 0
-// const events = await zkAppInstance.fetchEvents(UInt32.from(0));
-
-// let pastActions = await zkAppInstance.reducer.fetchActions({
-//   fromActionState: Reducer.initialActionState
-// })
 

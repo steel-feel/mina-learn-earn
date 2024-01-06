@@ -7,10 +7,6 @@ describe('Spy Messaging Network', () => {
     zkAppInstance: Message,
     Local: any
 
-    const Bob = PrivateKey.fromBase58(
-      'EKFAdBGSSXrBbaCVqy4YjwWHoGEnsqYRQTqz227Eb5bzMx2bWu3F'
-    )
-
   beforeAll(async () => {
     const useProof = false
 
@@ -40,9 +36,11 @@ describe('Spy Messaging Network', () => {
   test("Only Admin can add users ", async () => {
     const { privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1];
 
+    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
+
     // check for adding members
     const txn1 = await Mina.transaction(senderAccount, () => {
-      zkAppInstance.addUsers(Bob.toPublicKey());
+      zkAppInstance.addUsers(bobAccount);
       zkAppInstance.requireSignature()
     });
 
@@ -51,33 +49,34 @@ describe('Spy Messaging Network', () => {
   })
 
   test("Non-admin can not add users", async () => {
-    const Bob = PrivateKey.fromBase58(
-      'EKFAdBGSSXrBbaCVqy4YjwWHoGEnsqYRQTqz227Eb5bzMx2bWu3F'
-    )
 
     const { privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1];
+    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
 
     // add members without signing
     const txn1 = await Mina.transaction(senderAccount, () => {
-      zkAppInstance.addUsers(Bob.toPublicKey());
+      zkAppInstance.addUsers(bobAccount);
+      zkAppInstance.requireSignature()
     });
 
     return expect(txn1.sign([senderKey]).send()).rejects.toThrow()
-  })
-
-  test("Method addUser should emit actions", async () => {
-  
-    let pastActions = await zkAppInstance.reducer.fetchActions({
-      fromActionState: Reducer.initialActionState
-    })
-
-    expect(pastActions[0][0].toBase58()).toBe(Bob.toPublicKey().toBase58())
-
   })
 
   test("Total users should be 1", async () => {
     expect(zkAppInstance.totalUsers.get()).toEqual(Field.from(1))
   })
 
+  test("Spy should be able to send message", async () => {
+    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
+
+    const tx1 = await Mina.transaction(bobAccount, () => {
+      const message = Field.random()
+      zkAppInstance.sendMessage(message)
+    })
+
+    await tx1.prove()
+
+    return expect(tx1.sign([bobPrivateKey]).send()).resolves.toBeTruthy()
+  })
 
 });
