@@ -1,4 +1,4 @@
-import { AccountUpdate, Bool, Field, Mina, PrivateKey, PublicKey, Reducer } from 'o1js';
+import { AccountUpdate, Bool, Field, Mina, PrivateKey, PublicKey, Reducer, UInt32, fetchEvents, verify } from 'o1js';
 import { SpyNetwork } from './spynetwork';
 
 describe('Spy Messaging Network', () => {
@@ -89,6 +89,37 @@ describe('Spy Messaging Network', () => {
     return expect(tx1.sign([bobPrivateKey]).send()).resolves.toBeTruthy()
   })
 
+  test("Message should not be sent with wrong format", async () => {
+    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
+
+    const zkAppInstance = new SpyNetwork(zkAppAddress);
+
+    const tx1 = await Mina.transaction(bobAccount, () => {
+      const rawMessage = Field.random()
+      const mBits = rawMessage.toBits()
+      mBits[254] = new Bool(false)
+      mBits[253] = new Bool(true)
+      mBits[252] = new Bool(false)
+      mBits[251] = new Bool(false)
+      mBits[250] = new Bool(false)
+      mBits[249] = new Bool(true)
+
+      const message = Field.fromBits(mBits)
+
+      zkAppInstance.sendMessage(message)
+    })
+
+    await tx1.prove()
+    await tx1.sign([bobPrivateKey]).send()
+
+    //check for event of user
+    const events = await zkAppInstance.fetchEvents(UInt32.from(0))
+    //  expect(JSON.stringify(events[0].event.data)).toEqual(JSON.stringify(bobAccount))
+    
+    expect(events[1].event.data).toEqual(PublicKey.empty())
+
+
+  })
 
 
 });

@@ -107,14 +107,16 @@ export class SpyNetwork extends SmartContract {
             actionState: Reducer.initialActionState,
         };
 
+        const txnSender = this.sender
+
         // checking if the user already messaged
         let { state: isUserEligible } = this.reducer.reduce(
             pendingActions,
             Bool,
             (state: Bool, action: Spy) => {
-                //check if user is sender and its message is empty
-                let foundMessage = action.publicKey.equals(this.sender).and(action.message.equals(0))
-                let foundUser = action.publicKey.equals(this.sender)
+                //check if user is sender and its message is empty       
+                let foundUser = action.publicKey.equals(txnSender)
+                let foundMessage = foundUser.and(action.message.equals(0).not())
 
                 let userExists = foundUser.or(state)
                 return Provable.if(userExists.and(foundMessage), new Bool(false), userExists)
@@ -149,17 +151,17 @@ export class SpyNetwork extends SmartContract {
             mMessageBits[251]
            ,new Bool(true))   
 
-        const condition3 =   Provable.if(mMessageBits[250],
+        const condition3 =   Provable.if(mMessageBits[252],
              mMessageBits[253].not()
             .and(mMessageBits[254].not())
             ,new Bool(true)   )  
 
         const finCondition = condition1.and(condition2).and(condition3) 
 
-        const messageGate =   finCondition.and(isUserEligible)  
+        const messageGate =  finCondition.and(isUserEligible)  
 
         /// Update message counter
-        let updatedTotalMessages = Provable.if(messageGate, x, x.add(1));
+        let updatedTotalMessages = Provable.if(messageGate, x.add(1), x);
         this.totalMessages.set(updatedTotalMessages);
 
         /// Emit Action
