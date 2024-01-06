@@ -40,6 +40,7 @@ describe('Spy Messaging Network', () => {
 
     // check for adding members
     const txn1 = await Mina.transaction(senderAccount, () => {
+     const zkAppInstance = new SpyNetwork(zkAppAddress);
       zkAppInstance.addUsers(bobAccount);
       zkAppInstance.requireSignature()
     });
@@ -54,12 +55,20 @@ describe('Spy Messaging Network', () => {
     const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
 
     // add members without signing
-    const txn1 = await Mina.transaction(senderAccount, () => {
+    // const txn1 = await Mina.transaction(senderAccount, () => {
+    //   const zkAppInstance = new SpyNetwork(zkAppAddress);
+    //   zkAppInstance.addUsers(bobAccount);
+    //   zkAppInstance.requireSignature()
+    // });
+
+    // return expect(txn1.sign([senderKey]).send()).rejects.toThrow()
+
+   return expect(Mina.transaction(senderAccount, () => {
+      const zkAppInstance = new SpyNetwork(zkAppAddress);
       zkAppInstance.addUsers(bobAccount);
       zkAppInstance.requireSignature()
-    });
+    })).rejects.toThrow()
 
-    return expect(txn1.sign([senderKey]).send()).rejects.toThrow()
   })
 
   test("Total users should be 1", async () => {
@@ -70,6 +79,7 @@ describe('Spy Messaging Network', () => {
     const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
 
     const tx1 = await Mina.transaction(bobAccount, () => {
+      const zkAppInstance = new SpyNetwork(zkAppAddress);
       const rawMessage = Field.random()
       const mBits = rawMessage.toBits()
       mBits[254] = new Bool(false)
@@ -94,7 +104,7 @@ describe('Spy Messaging Network', () => {
 
     const zkAppInstance = new SpyNetwork(zkAppAddress);
 
-    const tx1 = await Mina.transaction(bobAccount, () => {
+    return expect( Mina.transaction(bobAccount, () => {
       const rawMessage = Field.random()
       const mBits = rawMessage.toBits()
       mBits[254] = new Bool(false)
@@ -107,17 +117,7 @@ describe('Spy Messaging Network', () => {
       const message = Field.fromBits(mBits)
 
       zkAppInstance.sendMessage(message)
-    })
-
-    await tx1.prove()
-    await tx1.sign([bobPrivateKey]).send()
-
-    //check for event of user
-    const events = await zkAppInstance.fetchEvents(UInt32.from(0))
-    //  expect(JSON.stringify(events[0].event.data)).toEqual(JSON.stringify(bobAccount))
-    
-    expect(events[1].event.data).toEqual(PublicKey.empty())
-
+    })).rejects.toThrow()
 
   })
 

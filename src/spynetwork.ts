@@ -81,8 +81,10 @@ export class SpyNetwork extends SmartContract {
             initial
         );
 
+        exists.assertFalse()
+
         let toEmit = new Spy({
-            publicKey: Provable.if(exists, PublicKey.empty(), user),
+            publicKey: user,
             message: Field.empty()
         })
 
@@ -160,19 +162,20 @@ export class SpyNetwork extends SmartContract {
 
         const messageGate =  finCondition.and(isUserEligible)  
 
+        messageGate.assertTrue()
+
         /// Update message counter
-        let updatedTotalMessages = Provable.if(messageGate, x.add(1), x);
-        this.totalMessages.set(updatedTotalMessages);
+        this.totalMessages.set(x.add(1));
 
         /// Emit Action
         let toEmit = new Spy({
-            publicKey: Provable.if(messageGate, this.sender, PublicKey.empty()),
-            message: Provable.if(messageGate, message, Field.empty()),
+            publicKey: this.sender ,
+            message: message,
         })
         this.reducer.dispatch(toEmit);
 
         /// Emit recevied message
-        this.emitEvent("received-message-from", Provable.if(messageGate, this.sender, PublicKey.empty()));
+        this.emitEvent("received-message-from", this.sender );
 
     }
 }
