@@ -54,7 +54,7 @@ export class SpyNetwork extends SmartContract {
         });
     }
 
-    @method addUsers(user: PublicKey) {
+    @method addUser(user: PublicKey) {
         /// To force admin only access We could also use `this.requireSignature()` 
         /// currently its done by `editActionState: Permissions.signature()`
         this.requireSignature();

@@ -36,12 +36,12 @@ describe('Spy Messaging Network', () => {
   test("Only Admin can add users ", async () => {
     const { privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1];
 
-    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
+    const { publicKey: bobAccount } = Local.testAccounts[2];
 
     // check for adding members
     const txn1 = await Mina.transaction(senderAccount, () => {
       const zkAppInstance = new SpyNetwork(zkAppAddress);
-      zkAppInstance.addUsers(bobAccount);
+      zkAppInstance.addUser(bobAccount);
       zkAppInstance.requireSignature()
     });
 
@@ -51,21 +51,12 @@ describe('Spy Messaging Network', () => {
 
   test("Non-admin can not add users", async () => {
 
-    const { privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1];
-    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
-
-    // add members without signing
-    // const txn1 = await Mina.transaction(senderAccount, () => {
-    //   const zkAppInstance = new SpyNetwork(zkAppAddress);
-    //   zkAppInstance.addUsers(bobAccount);
-    //   zkAppInstance.requireSignature()
-    // });
-
-    // return expect(txn1.sign([senderKey]).send()).rejects.toThrow()
+    const {  publicKey: senderAccount } = Local.testAccounts[1];
+    const {  publicKey: bobAccount } = Local.testAccounts[2];
 
     return expect(Mina.transaction(senderAccount, () => {
       const zkAppInstance = new SpyNetwork(zkAppAddress);
-      zkAppInstance.addUsers(bobAccount);
+      zkAppInstance.addUser(bobAccount);
       zkAppInstance.requireSignature()
     })).rejects.toThrow()
 
@@ -100,7 +91,7 @@ describe('Spy Messaging Network', () => {
   })
 
   test("Message should not be sent with wrong format", async () => {
-    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
+    const { publicKey: bobAccount } = Local.testAccounts[2];
 
     const zkAppInstance = new SpyNetwork(zkAppAddress);
 
@@ -122,7 +113,7 @@ describe('Spy Messaging Network', () => {
   })
 
   test("Should emit event for sent message", async () => {
-    const { privateKey: bobPrivateKey, publicKey: bobAccount } = Local.testAccounts[2];
+    const { publicKey: bobAccount } = Local.testAccounts[2];
     const zkAppInstance = new SpyNetwork(zkAppAddress);
 
     //check for event of user
