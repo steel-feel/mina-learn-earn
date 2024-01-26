@@ -60,7 +60,7 @@ export class SpyNetwork extends SmartContract {
         this.requireSignature();
         const x = this.totalUsers.get()
         this.totalUsers.requireEquals(x)
-        x.assertLessThanOrEqual(100)
+        x.assertLessThan(Field.from("100"), "Max user limit reached")
         // past actions 
         let pendingActions = this.reducer.getActions({ fromActionState: Reducer.initialActionState })
 
@@ -81,14 +81,14 @@ export class SpyNetwork extends SmartContract {
             initial
         );
 
-        exists.assertFalse()
+        exists.assertFalse("User already exists")
 
         let toEmit = new Spy({
             publicKey: user,
             message: Field.empty()
         })
 
-        let addedValue = Provable.if(exists, x, x.add(1));
+        let addedValue = x.add(1)
 
         this.totalUsers.set(addedValue);
 
