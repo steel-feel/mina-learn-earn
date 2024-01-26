@@ -45,7 +45,21 @@ describe('Spy Messaging Network', () => {
       zkAppInstance.requireSignature()
     });
 
+    await txn1.prove()
+
     return expect(txn1.sign([senderKey, zkAppPrivateKey]).send()).resolves.toBeTruthy()
+
+  })
+
+  test("A User can not be added twice", () => {
+    const {  publicKey: senderAccount } = Local.testAccounts[1];
+    const {  publicKey: bobAccount } = Local.testAccounts[2];
+
+    return expect(Mina.transaction(senderAccount, () => {
+      const zkAppInstance = new SpyNetwork(zkAppAddress);
+      zkAppInstance.addUser(bobAccount);
+      zkAppInstance.requireSignature()
+    })).rejects.toThrowError(/User already exists/)
 
   })
 
@@ -123,5 +137,6 @@ describe('Spy Messaging Network', () => {
     expect(events[0].type).toMatch(/received-message-from/)
   })
 
+  
 
 });
