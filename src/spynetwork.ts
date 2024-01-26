@@ -38,7 +38,7 @@ export class SpyNetwork extends SmartContract {
     @state(Field) totalMessages = State<Field>();
     //Map for storing user enrollment
     reducer = Reducer({
-        actionType: Spy,
+        actionType: Spy
     });
 
     events = {
@@ -78,7 +78,11 @@ export class SpyNetwork extends SmartContract {
                 return action.publicKey.equals(user).or(state);
             },
             // initial state
-            initial
+            initial,
+            {
+                maxTransactionsWithActions: 200,
+                skipActionStatePrecondition: true
+            }
         );
 
         exists.assertFalse("User already exists")

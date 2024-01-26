@@ -137,6 +137,28 @@ describe('Spy Messaging Network', () => {
     expect(events[0].type).toMatch(/received-message-from/)
   })
 
+
+  //Due nature of test transactions being resource intensive, this test is "skipped" for usual CI flow
+  test.skip("Max user limit 100", async () => {
+    const { privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1];
+
+    let txn1 ;
+    for (let i = 1; i < 100; i++)
+    {
+      txn1 = await Mina.transaction(senderAccount, () => {
+        const zkAppInstance = new SpyNetwork(zkAppAddress);
+        const newSpy = PrivateKey.random();
+        zkAppInstance.addUser(newSpy.toPublicKey());
+        zkAppInstance.requireSignature()
+      });
+  
+      await txn1.prove()
+      await txn1.sign([senderKey, zkAppPrivateKey]).send() 
+    }
+    
+    expect(zkAppInstance.totalUsers.get()).toEqual(Field.from(99))
+ 
+  })
   
 
 });
