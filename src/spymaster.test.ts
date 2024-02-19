@@ -64,10 +64,13 @@ describe('Spy Master Message proccessing', () => {
 
     const proof0 = await SpyMasterProgram.init(initState);
 
+    // New state current be equal to message number in order to be accepted
+    const MessageNumber = proof0.publicInput.current.add(1)
+
     const proof1 = await SpyMasterProgram.processMessage(
-      new ProcessedMessage({ offset: initState.offset, current: initState.offset.add(1) }),
+      new ProcessedMessage({ offset: initState.offset, current: MessageNumber  }),
       proof0,
-      new MessageDetails({ AgentID: Field(1), XLocation: Field(100), YLocation: Field(6000), CheckSum: Field(6101) }
+      new MessageDetails({  SNo: MessageNumber , AgentID: Field(1), XLocation: Field(100), YLocation: Field(6000), CheckSum: Field(6101) }
       ))
 
 
@@ -83,9 +86,9 @@ describe('Spy Master Message proccessing', () => {
     const proof0 = await SpyMasterProgram.init(initState);
 
     const proof1 = await SpyMasterProgram.processMessage(
-      new ProcessedMessage({ offset: initState.offset, current: initState.offset.add(1) }),
+      new ProcessedMessage({ offset: initState.offset, current: proof0.publicInput.current.add(1) }),
       proof0,
-      new MessageDetails({ AgentID: Field(1), XLocation: Field(100), YLocation: Field(6000), CheckSum: Field(6101) }
+      new MessageDetails({ SNo: initState.current.add(1) ,AgentID: Field(1), XLocation: Field(100), YLocation: Field(6000), CheckSum: Field(6101) }
       ))
 
 
@@ -101,9 +104,9 @@ describe('Spy Master Message proccessing', () => {
     const proof0 = await SpyMasterProgram.init(initState);
 
     const proof1 = await SpyMasterProgram.processMessage(
-      new ProcessedMessage({ offset: initState.offset, current: initState.offset.add(1) }),
+      new ProcessedMessage({ offset: initState.offset, current: proof0.publicInput.current.add(1) }),
       proof0,
-      new MessageDetails({ AgentID: Field(1), XLocation: Field(100), YLocation: Field(6000), CheckSum: Field(6101) }
+      new MessageDetails({ SNo: initState.current.add(1), AgentID: Field(1), XLocation: Field(100), YLocation: Field(6000), CheckSum: Field(6101) }
       ))
 
       const { privateKey: senderKey, publicKey: senderAccount } = Local.testAccounts[1];

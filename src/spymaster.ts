@@ -19,6 +19,7 @@ import {
 let zkAppInstance: SpyMasterContract;
 
 export class MessageDetails extends Struct({
+    SNo : Field,
     AgentID: Field,
     XLocation: Field,
     YLocation: Field,
@@ -83,7 +84,7 @@ export const SpyMasterProgram = ZkProgram({
 
         processMessage: {
             privateInputs: [SelfProof, MessageDetails],
-            method(newState: ProcessedMessage, earlierProof: SelfProof<Field, void>, messageDetails: MessageDetails) {
+            method(newState: ProcessedMessage, earlierProof: SelfProof<ProcessedMessage, void>, messageDetails: MessageDetails) {
               
                 //ToDo: check if new state offset is same as public input
                 earlierProof.verify();
@@ -92,13 +93,13 @@ export const SpyMasterProgram = ZkProgram({
                     return 
                 }
 
-                if (newState.current.lessThan(earlierProof.publicInput)) {
+                if (earlierProof.publicInput.current.greaterThan(messageDetails.SNo)) {
                     //Duplicate message, details needs not to be checked
-                    return
+                    return 
                 }
 
                 messageDetails.validateMessage().assertTrue("Message validation failed");
-                newState.current.assertEquals(earlierProof.publicInput.add(1));
+                newState.current.assertEquals(messageDetails.SNo);
             }
         },
 
