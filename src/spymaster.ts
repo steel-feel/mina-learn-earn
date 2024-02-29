@@ -4,14 +4,10 @@ import {
     Permissions,
     PublicKey,
     Bool,
-    Reducer,
-    Provable,
     state,
     State,
     Field,
     Struct,
-    UInt32,
-    Poseidon,
     ZkProgram,
     SelfProof,
 } from 'o1js';
@@ -19,7 +15,7 @@ import {
 let zkAppInstance: SpyMasterContract;
 
 export class MessageDetails extends Struct({
-    SNo : Field,
+    SNo: Field,
     AgentID: Field,
     XLocation: Field,
     YLocation: Field,
@@ -52,63 +48,121 @@ export class MessageDetails extends Struct({
 }
 
 export class ProcessedMessage extends Struct({
-        offset: Field,
-        current: Field
-}){
+    offset: Field,
+    current: Field,
+    prev: Field
+}) {
     empty(): ProcessedMessage {
         return new ProcessedMessage({
             offset: Field.empty(),
-            current: Field.empty()
+            current: Field.empty(),
+            prev: Field.empty()
         });
     }
 
 }
+
+export class ProcessResult extends Struct({
+    isAgentZero: Bool,
+    isSnoGreater: Bool,
+    isMessageValid: Bool
+}) { }
 
 
 export const SpyMasterProgram = ZkProgram({
     name: "spymaster",
     //ToDo: Should be struct having current value and message count offset value
     publicInput: ProcessedMessage,
+    publicOutput: ProcessResult,
 
     methods: {
-
         init: {
 
             privateInputs: [],
-
-            async method(state: ProcessedMessage) {
-                 state.offset.assertEquals(state.current)
+            method(state: ProcessedMessage): ProcessResult {
+                state.offset.assertEquals(state.current)
+                state.offset.assertEquals(state.prev)
+                return new ProcessResult({
+                    isAgentZero: Bool(false),
+                    isSnoGreater: Bool(false),
+                    isMessageValid: Bool(false)
+                })
             }
 
         },
 
+
+        //check if agent ID is 0
+        agentIdCheck: {
+            privateInputs: [MessageDetails, SelfProof],
+            method(newState: ProcessedMessage, messageDetails: MessageDetails,earlierProof: SelfProof<ProcessedMessage, ProcessResult>): ProcessResult {
+                earlierProof.verify()
+                newState.current.assertEquals(messageDetails.SNo)
+                messageDetails.AgentID.assertEquals(Field(0))
+
+                return new ProcessResult({
+                    isAgentZero:Bool(true),
+                    isSnoGreater: Bool(false),
+                    isMessageValid: Bool(false)
+                })
+            }
+
+        },
+        //check if processing message Sno is greater than current one
+        messageNumberCheck: {
+            privateInputs: [MessageDetails, SelfProof],
+            method(newState: ProcessedMessage, messageDetails: MessageDetails, earlierProof: SelfProof<ProcessedMessage, ProcessResult>): ProcessResult {
+                earlierProof.verify()
+                newState.current.assertEquals(newState.prev)
+                earlierProof.publicInput.prev.assertGreaterThanOrEqual(messageDetails.SNo)
+
+                return new ProcessResult({
+                    isAgentZero: Bool(false),
+                    isSnoGreater: Bool(true),
+                    isMessageValid: Bool(false)
+                })
+            }
+
+        },
+        //check to run message details validation
+        validMessageCheck: {
+            privateInputs: [MessageDetails,SelfProof],
+            method(newState: ProcessedMessage, messageDetails: MessageDetails, earlierProof: SelfProof<ProcessedMessage, ProcessResult> ): ProcessResult {
+                earlierProof.verify()
+                newState.current.assertEquals(messageDetails.SNo)
+                messageDetails.validateMessage().assertTrue("Message is invalid")
+
+                return new ProcessResult({
+                    isAgentZero: Bool(false),
+                    isSnoGreater: Bool(false),
+                    isMessageValid:  Bool(true),
+                })
+            }
+        },
+
+        //process message and increment prev processed message
         processMessage: {
-            privateInputs: [SelfProof, MessageDetails],
-            method(newState: ProcessedMessage, earlierProof: SelfProof<ProcessedMessage, void>, messageDetails: MessageDetails) {
-              
-                //ToDo: check if new state offset is same as public input
-                earlierProof.verify();
+            privateInputs: [SelfProof],
+            method(newState: ProcessedMessage, earlierProof: SelfProof<ProcessedMessage, ProcessResult>): ProcessResult {
+                earlierProof.verify()
 
-                if (messageDetails.AgentID.equals(0)) {
-                    return 
-                }
-
-                if (earlierProof.publicInput.current.greaterThan(messageDetails.SNo)) {
-                    //Duplicate message, details needs not to be checked
-                    return 
-                }
-
-                messageDetails.validateMessage().assertTrue("Message validation failed");
-                newState.current.assertEquals(messageDetails.SNo);
+                earlierProof.publicOutput.isAgentZero.or(earlierProof.publicOutput.isSnoGreater).or(earlierProof.publicOutput.isMessageValid).assertTrue()
+                newState.prev.assertEquals(earlierProof.publicInput.current);
+                
+                return new ProcessResult({
+                    isAgentZero: Bool(false),
+                    isSnoGreater: Bool(false),
+                    isMessageValid: Bool(false),
+                })
             }
-        },
+        }
 
     }
 })
 
 
 export let SpyMessageProof_ = ZkProgram.Proof(SpyMasterProgram);
-export class SpyMessageProof extends SpyMessageProof_ {}
+export class SpyMessageProof extends SpyMessageProof_ { }
 
 
 export function setzkAppInstance(address: PublicKey) {
@@ -135,7 +189,7 @@ export class SpyMasterContract extends SmartContract {
         spyMessageProof.publicInput.current.assertGreaterThan(spyMessageProof.publicInput.offset)
         spyMessageProof.verify();
 
-        this.messageCount.set(spyMessageProof.publicInput.current);
+        this.messageCount.set(spyMessageProof.publicInput.prev);
     }
 
 }
